@@ -50,6 +50,7 @@
   align-items: center;
   position: relative;
   font-weight: bolder;
+  padding-left: 1.5em;
 }
 .app_radio span {
   margin-top: auto;
@@ -68,9 +69,12 @@
   display: inline-block;
   width: 1em;
   height: 1em;
-  margin-right: 0.3em;
   border: 2px solid #0002;
   background: white;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   transition: 0.1s;
 }
 .app_radio:has(input[type="radio"]):hover::before {
@@ -92,7 +96,8 @@
   height: calc(1em - 4px);
   position: absolute;
   left: 4px;
-  top: 6px;
+  top: 50%;
+  transform: translateY(-50%);
   transition: 0.1s;
 }
 .app_radio:has(input[type="radio"]:checked)::after {
