@@ -851,6 +851,7 @@
     <button
       type="button"
       onclick={(e) => {
+        e.preventDefault();
         품목추가({ 복제: true });
         const target = e.currentTarget;
         setTimeout(() => target.scrollIntoView({ block: "nearest" }), 0);
