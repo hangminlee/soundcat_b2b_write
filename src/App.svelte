@@ -193,7 +193,13 @@
       품목정보.total_dome = Number(품목정보.dome_price) * Number(품목정보.qty);
     }
 
-    if (realForced && 품목.productInfo.itemType !== 3 && (마진셋업?.brand_disc_amount || 계산할브랜드)) {
+    /**
+     * 뭔가 가격 재계산 조건에서 수동 입력만 아니면 적용되게 해 놓은게 원인이어서
+     * 일반 발주 외에 데모 발주 시에도 가격이 재계산되어버리는 문제가 발생해
+     * 품목.productInfo.itemType !== 3 => 품목.productInfo.itemType === 0 으로 바꿈
+     * 왜 그렇게 적용했었는지는 기억 안남. 암튼 이렇게 하니 별 문제 없어 보임.
+     */
+    if (realForced && 품목.productInfo.itemType === 0 && (마진셋업?.brand_disc_amount || 계산할브랜드)) {
       품목리스트.map((각품목) => {
         if (!(각품목.productInfo.brand == 계산할브랜드 || 각품목.productInfo.brand == 품목.productInfo.brand)) return;
         const 품목정보 = 각품목.productInfo;
