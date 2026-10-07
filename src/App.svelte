@@ -24,50 +24,39 @@
   });
 
   let 선택상자열림 = $state(false);
-  let 선택상자항목: 임시배열타입[] = $state([]);
-  let 선택상자요소배열: HTMLElement[] = $state([]);
-  let 선택상자: HTMLElement | undefined = $state();
-  let 선택상자호출자: 선택상자호출자타입 = $state({
+  let 선택상자항목 = $state<임시배열타입[]>([]);
+  let 선택상자요소배열 = $state<HTMLElement[]>([]);
+  let 선택상자 = $state<HTMLElement>();
+  let 선택상자호출자 = $state<선택상자호출자타입>({
     요소: undefined,
     인덱스: -1,
     품목: undefined,
     유형: undefined,
   });
-  let 선택상자필터: 임시배열타입[] | undefined = $state();
+  let 선택상자필터 = $state<임시배열타입[]>();
 
-  let 선택상자선택항목: number = $state(-1);
-  let 직접입력선택상자: HTMLElement | undefined = $state();
-  let 선택중인품목원본: 품목리스트항목타입 | undefined = $state();
+  let 선택상자선택항목 = $state(-1);
+  let 직접입력선택상자 = $state<HTMLElement>();
+  let 선택중인품목원본 = $state<품목리스트항목타입>();
 
-  let 품절팝업열림: boolean = $state(false);
-  let 품절팝업내용: HTMLElement | undefined = $state();
-  let 전자배송팝업열림: boolean = $state(false);
-  let 전자배송팝업내용: HTMLTextAreaElement | undefined = $state();
+  let 품절팝업열림 = $state(false);
+  let 품절팝업내용 = $state<HTMLElement>();
+  let 전자배송팝업열림 = $state(false);
+  let 전자배송팝업내용 = $state<HTMLTextAreaElement>();
 
-  let 우편번호검색열림: Record<string, boolean> = $state({});
-  let 우편번호검색상자: Record<string, HTMLElement> = $state({});
-  let 우편번호상세입력란: Record<string, HTMLElement> = $state({});
+  let 우편번호검색열림 = $state<Record<string, boolean>>({});
+  let 우편번호검색상자 = $state<Record<string, HTMLElement>>({});
+  let 우편번호상세입력란 = $state<Record<string, HTMLElement>>({});
 
   /** 업체 별 가입 시 입력한 주소를 가져와 여기에 넣는다.*/
-  let 기본주소:
-    | {
-        name: string;
-        hp1: string;
-        hp2: string;
-        postcode: string;
-        addr1: string;
-        addr2: string;
-        addr3: string;
-      }
-    | null
-    | undefined = $state();
+  let 기본주소: 배송정보타입 | null | undefined = $state();
 
-  let 품목명입력란: Record<string, HTMLElement> = $state({});
+  let 품목명입력란 = $state<Record<string, HTMLElement>>({});
 
-  let 발주서상태: string = $state("대기");
+  let 발주서상태 = $state("대기");
   let 컨테이너 = $state();
 
-  let 전체품목: 전체품목리스트 = $state({} as 전체품목리스트);
+  let 전체품목 = $state<전체품목리스트>({});
 
   /** 검색상자(품목명 검색, 브랜드 검색 시 나타나는 선택상자)에 들어갈 값을 미리 생성해둔다. */
   let 검색상자전체품목: 임시배열타입[] | undefined = $derived.by(() => {
@@ -87,15 +76,15 @@
   });
 
   const 배송형태종류 = ["익일수령택배", "방문수령", "퀵착불", "퀵선불", "대리배송", "전자배송", ""] as const;
-  let 배송형태: 배송형태종류타입 | undefined = $state();
+  let 배송형태 = $state<배송형태종류타입>();
 
-  let 품목리스트: 품목리스트항목타입[] = $state([]);
+  let 품목리스트 = $state<품목리스트항목타입[]>([]);
   if (useDev) $inspect(품목리스트);
 
-  let 엑셀데이터: any[] = $state([]);
-  let 엑셀데이터선택창: boolean = $state(false);
-  let 엑셀파일선택: HTMLInputElement | undefined = $state();
-  let 엑셀로딩: boolean = $state(false);
+  let 엑셀데이터 = $state<any[]>([]);
+  let 엑셀데이터선택창 = $state(false);
+  let 엑셀파일선택 = $state<HTMLInputElement>();
+  let 엑셀로딩 = $state(false);
 
   /** 배송형태가 변경되면 이벤트에 따라 실행되는 함수. 익일수령택배로 선택된 경우, 기본주소 변수로부터 업체별 기본주소로 자동 입력시킨다. 아니면 undefined로 채운다. */
   function 배송형태변경(e: Event) {
@@ -202,6 +191,7 @@
      */
     if (realForced && 품목.productInfo.itemType === 0 && (마진셋업?.brand_disc_amount || 계산할브랜드)) {
       품목리스트.map((각품목) => {
+        if (각품목.productInfo.itemType !== 0) return;
         if (!(각품목.productInfo.brand == 계산할브랜드 || 각품목.productInfo.brand == 품목.productInfo.brand)) return;
         const 품목정보 = 각품목.productInfo;
         const 마진셋업 = 각품목.default_margin;
@@ -280,21 +270,17 @@
       cancelButtonText: "아니오(창닫기)",
     });
 
-    if (!팝업.isConfirmed) 품목.productInfo.itemType = 0;
+    if (!팝업.isConfirmed) {
+      품목.productInfo.itemType = 0;
+      가격계산(undefined, 품목, undefined);
+    }
   }
 
   /**
    * 품목 추가 버튼을 누르면 마지막 품목을 기반으로 새 발주 품목을 생성한다.
    * @param 옵션 복제 여부와 넣을 데이터를 수동으로 지정할 경우 데이터에 집어넣는다.
    */
-  function 품목추가(
-    옵션:
-      | {
-          복제?: boolean;
-          데이터?: 품목리스트항목타입[] | 품목리스트항목타입;
-        }
-      | undefined = undefined,
-  ) {
+  function 품목추가(옵션: { 복제?: boolean; 데이터?: 품목리스트항목타입[] | 품목리스트항목타입 } | undefined = undefined) {
     if (옵션 && 옵션.데이터) {
       const 데이터 = Array.isArray(옵션.데이터) ? 옵션.데이터 : [옵션.데이터];
       품목리스트 = [...품목리스트, ...데이터];
@@ -490,15 +476,17 @@
 
   /** 작성 완료를 누르면 Submit 함수로부터 이벤트를 감지하여 발주서 품목 값이 올바른지 유효성 검사한다. 검사에 실패하면 문제가 있는 필드를 빨갛게 표시해준다. */
   async function 유효성검사() {
-    let 검사결과: number = 1;
     let 자세한내용 = "";
-    if (!배송형태) {
-      검사결과 = 0;
-      자세한내용 = "배송형태가 선택되지 않았습니다.";
-    } else if (!품목리스트.length) {
-      검사결과 = 0;
-      자세한내용 = "품목 리스트가 존재하지 않습니다.";
-    } else {
+
+    function 검사실행() {
+      if (!배송형태) {
+        자세한내용 = "배송형태가 선택되지 않았습니다.";
+        return 0;
+      }
+      if (!품목리스트.length) {
+        자세한내용 = "품목 리스트가 존재하지 않습니다.";
+        return 0;
+      }
       const 결과 = 품목리스트.reduce(
         (
           acc: {
@@ -558,24 +546,27 @@
           warning_reason: [],
         },
       );
-      if (결과.status == false) 검사결과 = 0;
-      if (결과.status && 결과.warning) 검사결과 = 2;
+
+      if (결과.status == false) return 0;
+      if (결과.status && 결과.warning) return 2;
+
+      return 1;
     }
+
+    const 검사결과 = 검사실행();
 
     if (검사결과 == 0) {
       자세한내용 = "필수 입력란이 누락되었습니다. 내용을 확인해주세요.";
     }
+
     if (검사결과 == 2) 자세한내용 = "일부 항목이 누락되었습니다. 누락되었어도 진행이 가능하나 담당자 임의로 처리될 수 있는 점 확인 부탁드립니다.";
 
-    if (검사결과 == 0) {
-      const 팝업 = Swal.fire({
-        title: "입력란이 누락되어 있습니다.",
-        text: 자세한내용,
-        confirmButtonText: "확인",
-      });
-    }
+    const 팝업 = Swal.fire({
+      title: "알림",
+      text: 자세한내용,
+      confirmButtonText: "확인",
+    });
 
-    //@ts-ignore
     if (window.validateData) window.validateData(검사결과); // 작성 완료 버튼을 클릭하고 유효성 검사 결과를 반환한다. 유효성 검사는 Promise를 반환하도록 되어 있으므로, 결과가 반환되지 않으면 통과되지 않는다.
   }
 
@@ -599,7 +590,6 @@
   }
 
   onMount(async () => {
-    //@ts-ignore
     if (window.checkEnforced) setForced(window.checkEnforced());
 
     전체품목 = await 품목가져오기();
@@ -617,17 +607,14 @@
     let 발주서셀렉터: HTMLSelectElement | null = document.querySelector("#ca_name"); // HTML DOM에서 가져온다.
     if (발주서셀렉터) {
       발주서셀렉터.addEventListener("change", () => {
-        //@ts-ignore
         if (window.getOrderType) 발주서상태 = window.getOrderType(); // 이벤트를 여기에서 걸어 발주서상태가 발주서셀렉터를 변경함에 따라 업데이트 되도록 해준다. getOrderType() 함수는 write.skin.html.php 파일에 있다.
       });
     }
 
-    //@ts-ignore
     if (window.getExistingData)
       // 발주서를 수정하는 경우 기존에 JSON 값이 있을텐데 그걸 가져오도록 하는 함수이다. getExistingData() 함수는 write.skin.html.php 파일에 있다.
       품목리스트 = [
         ...품목리스트,
-        //@ts-ignore
         ...window.getExistingData().map((x) => ({
           ...x,
           default_margin: 전체품목?.[x.productInfo.brand]?.find((y) => y.PROD_CD == x.productInfo.PROD_CD)?.default_margin,
@@ -638,15 +625,12 @@
       품목추가();
     }
 
-    //@ts-ignore
     if (window.getDefaultAddr) 기본주소 = window.getDefaultAddr(); // 업체 별 가입 시 등록된 주소를 가져와 저장하는 함수이다. getDefaultAddr() 함수는 write.skin.html.php 파일에 있다.
-    //@ts-ignore
     if (window.getOrderType) 발주서상태 = window.getOrderType(); // 발주서 상태를 가져오는 함수이다. getOrderType() 함수는 write.skin.html.php 파일에 있다.
 
     window.addEventListener("formValidation", 유효성검사); // formValidation이라는 커스텀 이벤트를 리스닝하고, write.skin.html.php 함수에서 Submit 할 때 이 이벤트를 Dispatch하여 유효성검사 함수가 실행되도록 한다.
-    window.addEventListener("autosaveload", (e) => {
+    window.addEventListener("autosaveload", (e: CustomEventInit) => {
       // autosaveload라는 커스텀 이벤트를 리스닝하고, write.skin.html.php에서 이벤트를 Dispatch하면 거기서 자동저장된 발주서 정보를 가져와 품목리스트에 담아준다.
-      //@ts-ignore
       const json = e.detail.json;
       try {
         const parsed = JSON.parse(json);
@@ -675,9 +659,7 @@
 
   // 발주서 품목리스트 값이 변경되면 write.skin.html.php의 setData()함수를 실행하여 실제 들어갈 데이터를 전송한다.
   $effect(() => {
-    //@ts-ignore
     if (품목리스트 && window.setData)
-      //@ts-ignore
       window.setData(
         품목리스트.map((x) => {
           const 반환할값 = structuredClone($state.snapshot(x));
@@ -689,7 +671,7 @@
 </script>
 
 <div class="app_container" bind:this={컨테이너}>
-  <div class="prod_list" class:excelLoading={엑셀로딩}>
+  <div class={{ prod_list: true, excelLoading: 엑셀로딩 }}>
     {#each 품목리스트 as 품목, 인덱스 (품목.uuid)}
       <div
         class="prod_item"
@@ -797,7 +779,7 @@
                   type="text"
                   placeholder="브랜드를 선택하지 않아도 품목 선택 가능"
                   id="id_{인덱스}_product"
-                  class={[품목.productInfo.PROD_CD == "etc_001" && "editable", 품목.failed && !품목.productInfo.product && "failed"]}
+                  class={{ editable: 품목.productInfo.PROD_CD == "etc_001", failed: 품목.failed && !품목.productInfo.product }}
                   bind:this={품목명입력란[품목.uuid]}
                   bind:value={
                     () => 품목.productInfo.product,
@@ -817,7 +799,7 @@
                   <div>
                     <label for="id_{인덱스}_prop" class="app_label block">옵션</label>
                   </div>
-                  <input type="text" id="id_{인덱스}_prop" class:failed={품목.failed && 품목.productInfo.useprop && !품목.productInfo.prop} bind:value={품목.productInfo.prop} />
+                  <input type="text" id="id_{인덱스}_prop" class={{ failed: 품목.failed && 품목.productInfo.useprop && !품목.productInfo.prop }} bind:value={품목.productInfo.prop} />
                 </div>
               {/if}
               <div class="app_col" style="--flex-basis: 20%;">
@@ -825,7 +807,7 @@
                   <label for="id_{인덱스}_sell_price" class="app_label block">소비자가</label>
                 </div>
                 <div class="app_text_input" data-label="원">
-                  <input type="text" id="id_{인덱스}_sell_price" class={[품목.productInfo.PROD_CD == "etc_001" && "editable"]} style="cursor: {품목.productInfo.PROD_CD !== 'etc_001' ? 'not-allowed' : 'normal'}" bind:value={() => new Intl.NumberFormat("ko-KR").format(Number(품목.productInfo.sell_price)), (e) => 가격계산(e, 품목, "소비자가")} readonly={품목.productInfo.PROD_CD !== "etc_001" || 품목.productInfo.itemType !== 3} />
+                  <input type="text" id="id_{인덱스}_sell_price" class={{ editable: 품목.productInfo.PROD_CD == "etc_001", "not-allowed": 품목.productInfo.PROD_CD !== "etc_001" }} bind:value={() => new Intl.NumberFormat("ko-KR").format(Number(품목.productInfo.sell_price)), (e) => 가격계산(e, 품목, "소비자가")} readonly={품목.productInfo.PROD_CD !== "etc_001" || 품목.productInfo.itemType !== 3} />
                 </div>
               </div>
               <div class="app_col" style="--flex-basis: 20%;">
@@ -833,29 +815,29 @@
                   <label for="id_{인덱스}_dome_price" class="app_label block">공급단가</label>
                 </div>
                 <div class="app_text_input" data-label="원">
-                  <input type="text" id="id_{인덱스}_dome_price" class={[realForced && 품목.productInfo.itemType === 3 && "editable"]} style="cursor: {품목.productInfo.itemType == 3 ? 'normal' : 'not-allowed'}" bind:value={() => new Intl.NumberFormat("ko-KR").format(Number(품목.productInfo.dome_price)), (e) => 가격계산(e, 품목, "공급단가")} readonly={품목.productInfo.itemType == 3 ? false : true} />
+                  <input type="text" id="id_{인덱스}_dome_price" class={{ editable: realForced && 품목.productInfo.itemType === 3, "not-allowed": 품목.productInfo.itemType != 3 }} bind:value={() => new Intl.NumberFormat("ko-KR").format(Number(품목.productInfo.dome_price)), (e) => 가격계산(e, 품목, "공급단가")} readonly={품목.productInfo.itemType == 3 ? false : true} />
                 </div>
               </div>
               <div class="app_col" style="--flex-basis: 10%;">
                 <div>
                   <label for="id_{인덱스}_qty" class="app_label block">수량</label>
                 </div>
-                <div class={["app_text_input", 품목.default_margin && !품목.productInfo.itemType && !할인조건계산(품목) && "qty"]} data-label="개" data-discqty={할인조건계산(품목, true)}>
-                  <input type="text" class={["app_text_input", realForced && 품목.productInfo.itemType === 3 && "editable"]} data-label="개" class:failed={품목.failed && !품목.productInfo.qty} readonly={품목.productInfo.itemType === 1 || 품목.productInfo.itemType === 2 ? true : false} style="cursor: {품목.productInfo.itemType === 1 || 품목.productInfo.itemType === 2 ? 'not-allowed' : 'normal'}" id="id_{인덱스}_qty" bind:value={() => new Intl.NumberFormat("ko-KR").format(Math.floor(Number(품목.productInfo.qty))), (e) => 가격계산(e, 품목, "수량")} />
+                <div class={{ app_text_input: true, qty: 품목.default_margin && !품목.productInfo.itemType && !할인조건계산(품목) }} data-label="개" data-discqty={할인조건계산(품목, true)}>
+                  <input type="text" class={{ app_text_input: true, editable: realForced && 품목.productInfo.itemType === 3, "not-allowed": 품목.productInfo.itemType === 1 || 품목.productInfo.itemType === 2, failed: 품목.failed && !품목.productInfo.qty }} data-label="개" readonly={품목.productInfo.itemType === 1 || 품목.productInfo.itemType === 2 ? true : false} id="id_{인덱스}_qty" bind:value={() => new Intl.NumberFormat("ko-KR").format(Math.floor(Number(품목.productInfo.qty))), (e) => 가격계산(e, 품목, "수량")} />
                 </div>
               </div>
               <div class="app_col" style="--flex-basis: 10%;">
                 <div>
                   <label for="id_{인덱스}_margin" class="app_label block">마진(%)</label>
                 </div>
-                <input type="text" id="id_{인덱스}_margin" class={[realForced && 품목.productInfo.itemType === 3 && "editable"]} style="cursor: {품목.productInfo.itemType == 3 ? 'normal' : 'not-allowed'}" bind:value={() => new Intl.NumberFormat("ko-KR").format(Number(품목.productInfo.margin)), (e) => 가격계산(e, 품목, "마진")} readonly={품목.productInfo.itemType == 3 ? false : true} />
+                <input type="text" id="id_{인덱스}_margin" class={{ editable: realForced && 품목.productInfo.itemType === 3, "not-allowed": 품목.productInfo.itemType != 3 }} bind:value={() => new Intl.NumberFormat("ko-KR").format(Number(품목.productInfo.margin)), (e) => 가격계산(e, 품목, "마진")} readonly={품목.productInfo.itemType == 3 ? false : true} />
               </div>
               <div class="app_col" style="--flex-basis: 40%;">
                 <div>
                   <label for="id_{인덱스}_total_dome" class="app_label block">공급합계</label>
                 </div>
                 <div class="app_text_input" data-label="원">
-                  <input type="text" id="id_{인덱스}_total_dome" style="cursor: not-allowed" value={new Intl.NumberFormat("ko-KR").format(Number(품목.productInfo.total_dome))} readonly />
+                  <input class="not-allowed" type="text" id="id_{인덱스}_total_dome" value={new Intl.NumberFormat("ko-KR").format(Number(품목.productInfo.total_dome))} readonly />
                 </div>
               </div>
             </div>

@@ -243,6 +243,10 @@ button:active {
   left: 0;
 }
 
+.not-allowed {
+  cursor: not-allowed;
+}
+
 @media screen and (max-width: 640px) {
   .app_row .app_col {
     flex-basis: 100%;
